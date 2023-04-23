@@ -1,4 +1,4 @@
-fn row_sum_odd_numbers(n: i64) -> i64 {
+pub fn row_sum_odd_numbers(n: i64) -> i64 {
     let start_position: usize = (1..(n as usize)).sum();
 
     (1..)
