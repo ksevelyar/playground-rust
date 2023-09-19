@@ -1,3 +1,4 @@
+pub mod disemvowel_trolls;
 pub mod exes_and_ohs;
 pub mod remove_smallest;
 pub mod reverse_words;

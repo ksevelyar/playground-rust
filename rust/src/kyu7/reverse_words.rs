@@ -13,6 +13,15 @@ fn reverse_word(word: &str) -> String {
     })
 }
 
+fn two_sort(arr: &[&str]) -> String {
+    let word = arr.iter().min().unwrap();
+
+    word.chars()
+        .map(|ch| ch.to_string())
+        .collect::<Vec<_>>()
+        .join("***")
+}
+
 #[test]
 fn sample_test() {
     assert_eq!(
