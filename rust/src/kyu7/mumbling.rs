@@ -2,7 +2,7 @@ pub fn accum(input: &str) -> String {
     input
         .chars()
         .enumerate()
-        .map(|x| repeat_and_camelize(x))
+        .map(repeat_and_camelize)
         .collect::<Vec<String>>()
         .join("-")
 }
