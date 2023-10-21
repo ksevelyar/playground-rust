@@ -1,6 +1,7 @@
 pub mod disemvowel_trolls;
 pub mod exes_and_ohs;
 pub mod find_next_square;
+pub mod growth_of_population;
 pub mod middle;
 pub mod mumbling;
 pub mod open_or_senior;
