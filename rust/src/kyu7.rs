@@ -8,6 +8,7 @@ pub mod maximum_length_difference;
 pub mod middle;
 pub mod mumbling;
 pub mod open_or_senior;
+pub mod power_of_two;
 pub mod remove_smallest;
 pub mod reverse_words;
 pub mod spiraling_box;
