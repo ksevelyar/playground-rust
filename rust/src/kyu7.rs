@@ -1,6 +1,8 @@
+pub mod alphabet_symmetry;
 pub mod check_exam;
 pub mod disemvowel_trolls;
 pub mod exes_and_ohs;
+pub mod find_digit;
 pub mod find_next_square;
 pub mod from_a_to_z;
 pub mod growth_of_population;
