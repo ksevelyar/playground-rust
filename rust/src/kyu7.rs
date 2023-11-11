@@ -1,4 +1,5 @@
 pub mod alphabet_symmetry;
+pub mod alphabetical_addition;
 pub mod check_exam;
 pub mod disemvowel_trolls;
 pub mod exes_and_ohs;
