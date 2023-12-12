@@ -18,3 +18,12 @@ fn repeat_and_camelize((ind, ch): (usize, char)) -> String {
 fn basic_tests() {
     assert_eq!(accum("cwAt"), "C-Ww-Aaa-Tttt");
 }
+fn calc(s: &str) -> u32 {
+    let sevens: u32 = s
+        .as_bytes()
+        .iter()
+        .map(|byte| byte.to_string().chars().filter(|ch| *ch == '7').count() as u32)
+        .sum();
+
+    sevens * 6
+}
