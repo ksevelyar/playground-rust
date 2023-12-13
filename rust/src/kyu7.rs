@@ -1,7 +1,9 @@
+pub mod add;
 pub mod alphabet_symmetry;
-pub mod coloured_triangles;
 pub mod alphabetical_addition;
+pub mod balanced_number;
 pub mod check_exam;
+pub mod coloured_triangles;
 pub mod disemvowel_trolls;
 pub mod exes_and_ohs;
 pub mod find_digit;
@@ -20,4 +22,3 @@ pub mod spiraling_box;
 pub mod square_every_digit;
 pub mod sum_of_odd_numbers;
 pub mod two_to_one;
-pub mod balanced_number;
