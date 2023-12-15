@@ -3,6 +3,7 @@ pub mod alphabet_symmetry;
 pub mod alphabetical_addition;
 pub mod balanced_number;
 pub mod check_exam;
+pub mod collatz;
 pub mod coloured_triangles;
 pub mod disemvowel_trolls;
 pub mod exes_and_ohs;
