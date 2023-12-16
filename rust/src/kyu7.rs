@@ -1,4 +1,5 @@
 pub mod add;
+pub mod all_inclusive;
 pub mod alphabet_symmetry;
 pub mod alphabetical_addition;
 pub mod balanced_number;
