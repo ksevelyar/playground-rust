@@ -1,5 +1,7 @@
 pub fn balanced_num(n: u64) -> String {
-    if n <= 19 { return "Balanced".to_string() }
+    if n <= 19 {
+        return "Balanced".to_string();
+    }
 
     let n = n.to_string();
     let middle = n.len() / 2;
@@ -16,5 +18,8 @@ pub fn balanced_num(n: u64) -> String {
 }
 
 fn sum(digits: &str) -> u64 {
-    digits.chars().map(|ch| ch.to_digit(10).unwrap() as u64).sum()
+    digits
+        .chars()
+        .map(|ch| ch.to_digit(10).unwrap() as u64)
+        .sum()
 }
