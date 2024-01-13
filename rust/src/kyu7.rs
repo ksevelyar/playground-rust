@@ -27,3 +27,4 @@ pub mod spiraling_box;
 pub mod square_every_digit;
 pub mod sum_of_odd_numbers;
 pub mod two_to_one;
+pub mod digital_cypher;
