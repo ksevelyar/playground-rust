@@ -1,0 +1,8 @@
+# compiled files and executables
+debug/
+target/
+
+
+# Added by cargo
+
+/target
