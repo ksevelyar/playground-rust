@@ -25,6 +25,7 @@
               openssl
               pkg-config
               rust-bin.stable.latest.default
+              rust-analyzer
 
               workshop-runner
             ];
