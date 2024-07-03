@@ -10,69 +10,61 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
   };
 
-  outputs = { self, flake-utils, nixpkgs, ... }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
+  outputs = {
+    self,
+    flake-utils,
+    nixpkgs,
+    ...
+  }:
+    flake-utils.lib.eachDefaultSystem (system: let
+      pkgs = nixpkgs.legacyPackages.${system};
 
-        cargoBuildInputs = with pkgs; lib.optionals stdenv.isDarwin [
+      cargoBuildInputs = with pkgs;
+        lib.optionals stdenv.isDarwin [
           darwin.apple_sdk.frameworks.CoreServices
         ];
 
-        rustlings =
-          pkgs.rustPlatform.buildRustPackage {
-            name = "rustlings";
-            version = "5.6.1";
+      rustlings = pkgs.rustPlatform.buildRustPackage {
+        pname = "rustlings";
+        version = "6.0.0";
+        doCheck = false;
 
-            buildInputs = cargoBuildInputs;
-            nativeBuildInputs = [pkgs.git];
+        src = pkgs.fetchFromGitHub {
+          owner = "rust-lang";
+          repo = "rustlings";
+          rev = "v6.0.0";
+          hash = "sha256-KclyTvGyH4EO10rl+kBshPTj+1/8PxDRJ9t100z0nrE=";
+        };
 
-            src = with pkgs.lib; cleanSourceWith {
-              src = self;
-              # a function that returns a bool determining if the path should be included in the cleaned source
-              filter = path: type:
-                let
-                  # filename
-                  baseName = builtins.baseNameOf (toString path);
-                  # path from root directory
-                  path' = builtins.replaceStrings [ "${self}/" ] [ "" ] path;
-                  # checks if path is in the directory
-                  inDirectory = directory: hasPrefix directory path';
-                in
-                inDirectory "src" ||
-                inDirectory "tests" ||
-                hasPrefix "Cargo" baseName ||
-                baseName == "info.toml";
-            };
+        cargoHash = "sha256-p6bSRZopndKYr+E8XQfk8H/AlnzqUEMosR9ml1VRp/k=";
+      };
+    in {
+      devShell = pkgs.mkShell {
+        RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
 
-            cargoLock.lockFile = ./Cargo.lock;
-          };
-      in
-      {
-        devShell = pkgs.mkShell {
-          RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-
-          buildInputs = with pkgs; [
+        buildInputs = with pkgs;
+          [
             cargo
             rustc
             rust-analyzer
-            rustlings
             rustfmt
             clippy
-          ] ++ cargoBuildInputs;
+            rustlings
+          ]
+          ++ cargoBuildInputs;
+      };
+      apps = let
+        rustlings-app = {
+          type = "app";
+          program = "${rustlings}/bin/rustlings";
         };
-        apps = let
-          rustlings-app = {
-            type = "app";
-            program = "${rustlings}/bin/rustlings";
-          };
-        in {
-          default = rustlings-app;
-          rustlings = rustlings-app;
-        };
-        packages = {
-          inherit rustlings;
-          default = rustlings;
-        };
-      });
+      in {
+        default = rustlings-app;
+        rustlings = rustlings-app;
+      };
+      packages = {
+        inherit rustlings;
+        default = rustlings;
+      };
+    });
 }
