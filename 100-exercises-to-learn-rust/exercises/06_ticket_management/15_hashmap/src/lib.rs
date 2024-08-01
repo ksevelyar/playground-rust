@@ -11,7 +11,7 @@ pub struct TicketStore {
     counter: u64,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
 pub struct TicketId(u64);
 
 #[derive(Clone, Debug, PartialEq)]
@@ -38,7 +38,7 @@ pub enum Status {
 impl TicketStore {
     pub fn new() -> Self {
         Self {
-            tickets: todo!(),
+            tickets: HashMap::new(),
             counter: 0,
         }
     }
@@ -46,22 +46,25 @@ impl TicketStore {
     pub fn add_ticket(&mut self, ticket: TicketDraft) -> TicketId {
         let id = TicketId(self.counter);
         self.counter += 1;
+
         let ticket = Ticket {
             id,
             title: ticket.title,
             description: ticket.description,
             status: Status::ToDo,
         };
-        todo!();
+
+        self.tickets.insert(id, ticket);
+
         id
     }
 
     pub fn get(&self, id: TicketId) -> Option<&Ticket> {
-        todo!()
+        self.tickets.get(&id)
     }
 
     pub fn get_mut(&mut self, id: TicketId) -> Option<&mut Ticket> {
-        todo!()
+        self.tickets.get_mut(&id)
     }
 }
 
