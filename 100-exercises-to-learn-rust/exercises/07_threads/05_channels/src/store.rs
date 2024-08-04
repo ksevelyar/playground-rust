@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct TicketId(u64);
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TicketStore {
     tickets: BTreeMap<TicketId, Ticket>,
     counter: u64,
