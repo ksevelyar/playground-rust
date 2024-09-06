@@ -29,6 +29,7 @@
               )
               gdb
               cargo-binutils
+              rust-analyzer
               probe-rs
               minicom
             ];
