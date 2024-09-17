@@ -46,8 +46,22 @@ where
     I: Write<Error = E> + WriteRead<Error = E>,
     E: Debug,
 {
-    let data = get_data(sensor, display, timer);
-    return calibrate(&data);
+    //let data = get_data(sensor, display, timer);
+    //return calibrate(&data);
+
+    Calibration {
+        center: Measurement {
+            x: -33626,
+            y: 31580,
+            z: 42796,
+        },
+        scale: Measurement {
+            x: 1054,
+            y: 1047,
+            z: 1067,
+        },
+        radius: 53654,
+    }
 }
 
 fn get_data<I, T, E>(
