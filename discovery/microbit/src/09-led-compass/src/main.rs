@@ -10,6 +10,9 @@ mod calibration;
 use crate::calibration::calc_calibration;
 use crate::calibration::calibrated_measurement;
 
+mod led;
+use led::Direction;
+
 use microbit::{display::blocking::Display, hal::Timer};
 
 use microbit::{hal::twim, pac::twim0::frequency::FREQUENCY_A};
@@ -36,9 +39,62 @@ fn main() -> ! {
     rprintln!("Calibration: {:?}", calibration);
     rprintln!("Calibration done, entering busy loop");
     loop {
-        //while !sensor.mag_status().unwrap().xyz_new_data {}
-        //let mut data = sensor.mag_data().unwrap();
-        //data = calibrated_measurement(data, &calibration);
-        //rprintln!("x: {}, y: {}, z: {}", data.x, data.y, data.z);
+        while !sensor.mag_status().unwrap().xyz_new_data {}
+        let mut data = sensor.mag_data().unwrap();
+        data = calibrated_measurement(data, &calibration);
+
+        let dir = match (data.x > 0, data.y > 0) {
+            // Quadrant 1
+            (true, true) => Direction::NorthEast,
+            // Quadrant 2
+            (false, true) => Direction::NorthWest,
+            // Quadrant 3
+            (false, false) => Direction::SouthWest,
+            // Quadrant 4
+            (true, false) => Direction::SouthEast,
+        };
+        display.clear();
+        let leds = arrow(dir);
+        display.show(&mut timer, leds, 30);
+    }
+}
+
+fn arrow(dir: Direction) -> [[u8; 5]; 5] {
+    match dir {
+        Direction::NorthEast => [
+            [0, 0, 0, 1, 1],
+            [0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        ],
+        Direction::NorthWest => [
+            [1, 1, 0, 0, 0],
+            [1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        ],
+        Direction::SouthEast => [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1],
+            [0, 0, 0, 1, 1],
+        ],
+        Direction::SouthWest => [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0],
+            [1, 1, 0, 0, 0],
+        ],
+        _ => [
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        ],
     }
 }
