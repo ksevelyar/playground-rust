@@ -11,7 +11,12 @@ use crate::calibration::calc_calibration;
 use crate::calibration::calibrated_measurement;
 
 mod led;
-use led::Direction;
+use crate::led::direction_to_led;
+use crate::led::Direction;
+
+// You'll find this useful ;-)
+use core::f32::consts::PI;
+use libm::atan2f;
 
 use microbit::{display::blocking::Display, hal::Timer};
 
@@ -43,58 +48,28 @@ fn main() -> ! {
         let mut data = sensor.mag_data().unwrap();
         data = calibrated_measurement(data, &calibration);
 
-        let dir = match (data.x > 0, data.y > 0) {
-            // Quadrant 1
-            (true, true) => Direction::NorthEast,
-            // Quadrant 2
-            (false, true) => Direction::NorthWest,
-            // Quadrant 3
-            (false, false) => Direction::SouthWest,
-            // Quadrant 4
-            (true, false) => Direction::SouthEast,
-        };
-        display.clear();
-        let leds = arrow(dir);
-        display.show(&mut timer, leds, 30);
-    }
-}
+        // use libm's atan2f since this isn't in core yet
+        let theta = atan2f(data.y as f32, data.x as f32);
 
-fn arrow(dir: Direction) -> [[u8; 5]; 5] {
-    match dir {
-        Direction::NorthEast => [
-            [0, 0, 0, 1, 1],
-            [0, 0, 0, 0, 1],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-        ],
-        Direction::NorthWest => [
-            [1, 1, 0, 0, 0],
-            [1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-        ],
-        Direction::SouthEast => [
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 1],
-            [0, 0, 0, 1, 1],
-        ],
-        Direction::SouthWest => [
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [1, 0, 0, 0, 0],
-            [1, 1, 0, 0, 0],
-        ],
-        _ => [
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-        ],
+        rprintln!("theta: {:?}", theta);
+
+        let dir = match theta {
+            PI => Direction::West,
+            x if x > PI / 2.0 => Direction::NorthWest,
+            x if x == PI / 2.0 => Direction::North,
+            x if x > 0.0 => Direction::NorthEast,
+            x if x == 0.0 => Direction::East,
+
+            x if x == -PI => Direction::West,
+            x if x < -PI / 2.0 => Direction::SouthWest,
+            x if x == -PI / 2.0 => Direction::South,
+            x if x < 0.0 => Direction::SouthEast,
+            _ => panic!(),
+        };
+
+        // Figure out the direction based on theta
+        //let dir = Direction::NorthEast;
+
+        display.show(&mut timer, direction_to_led(dir), 100);
     }
 }
