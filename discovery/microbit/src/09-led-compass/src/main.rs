@@ -53,22 +53,25 @@ fn main() -> ! {
 
         rprintln!("theta: {:?}", theta);
 
-        let dir = match theta {
-            PI => Direction::West,
-            x if x > PI / 2.0 => Direction::NorthWest,
-            x if x == PI / 2.0 => Direction::North,
-            x if x > 0.0 => Direction::NorthEast,
-            x if x == 0.0 => Direction::East,
-
-            x if x == -PI => Direction::West,
-            x if x < -PI / 2.0 => Direction::SouthWest,
-            x if x == -PI / 2.0 => Direction::South,
-            x if x < 0.0 => Direction::SouthEast,
-            _ => panic!(),
+        let dir = if theta < -7. * PI / 8. {
+            Direction::West
+        } else if theta < -5. * PI / 8. {
+            Direction::SouthWest
+        } else if theta < -3. * PI / 8. {
+            Direction::South
+        } else if theta < -PI / 8. {
+            Direction::SouthEast
+        } else if theta < PI / 8. {
+            Direction::East
+        } else if theta < 3. * PI / 8. {
+            Direction::NorthEast
+        } else if theta < 5. * PI / 8. {
+            Direction::North
+        } else if theta < 7. * PI / 8. {
+            Direction::NorthWest
+        } else {
+            Direction::West
         };
-
-        // Figure out the direction based on theta
-        //let dir = Direction::NorthEast;
 
         display.show(&mut timer, direction_to_led(dir), 100);
     }
