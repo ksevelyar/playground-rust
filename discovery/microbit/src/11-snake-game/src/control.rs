@@ -1,11 +1,11 @@
+use crate::game::Turn;
 use core::cell::RefCell;
 use cortex_m::interrupt::{free, Mutex};
 use microbit::{
     board::Buttons,
     hal::gpiote::Gpiote,
-    pac::{self, interrupt}
+    pac::{self, interrupt},
 };
-use crate::game::Turn;
 static GPIO: Mutex<RefCell<Option<Gpiote>>> = Mutex::new(RefCell::new(None));
 static TURN: Mutex<RefCell<Turn>> = Mutex::new(RefCell::new(Turn::None));
 
@@ -58,7 +58,7 @@ fn GPIOTE() {
             let turn = match (a_pressed, b_pressed) {
                 (true, false) => Turn::Left,
                 (false, true) => Turn::Right,
-                _ => Turn::None
+                _ => Turn::None,
             };
 
             gpiote.channel0().reset_events();

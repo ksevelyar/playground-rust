@@ -14,9 +14,7 @@ pub(crate) fn init_display(board_timer: TIMER1, board_display: DisplayPins) {
     free(move |cs| {
         *DISPLAY.borrow(cs).borrow_mut() = Some(display);
     });
-    unsafe {
-        pac::NVIC::unmask(pac::Interrupt::TIMER1)
-    }
+    unsafe { pac::NVIC::unmask(pac::Interrupt::TIMER1) }
 }
 
 /// Display an image.

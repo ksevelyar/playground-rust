@@ -1,15 +1,15 @@
 // Imports we will use later on
-use heapless::FnvIndexSet;
 use heapless::spsc::Queue;
+use heapless::FnvIndexSet;
 
 /// A basic pseudo-random number generator.
 struct Prng {
-    value: u32
+    value: u32,
 }
 
 impl Prng {
     fn new(seed: u32) -> Self {
-        Self {value: seed}
+        Self { value: seed }
     }
 
     /// Basic xorshift PRNG function: see https://en.wikipedia.org/wiki/Xorshift
@@ -33,24 +33,21 @@ struct Coords {
     // Signed ints to allow negative values (handy when checking if we have gone off the top or left
     // of the grid)
     row: i8,
-    col: i8
+    col: i8,
 }
 
 impl Coords {
     /// Get random coordinates within a grid. `exclude` is an optional set of coordinates which
     /// should be excluded from the output.
-    fn random(
-        rng: &mut Prng,
-        exclude: Option<&FnvIndexSet<Coords, 32>>
-    ) -> Self {
+    fn random(rng: &mut Prng, exclude: Option<&FnvIndexSet<Coords, 32>>) -> Self {
         let mut coords = Coords {
             row: ((rng.random_u32() as usize) % 5) as i8,
-            col: ((rng.random_u32() as usize) % 5) as i8
+            col: ((rng.random_u32() as usize) % 5) as i8,
         };
         while exclude.is_some_and(|exc| exc.contains(&coords)) {
             coords = Coords {
                 row: ((rng.random_u32() as usize) % 5) as i8,
-                col: ((rng.random_u32() as usize) % 5) as i8
+                col: ((rng.random_u32() as usize) % 5) as i8,
             }
         }
         coords
@@ -67,7 +64,7 @@ enum Direction {
     Up,
     Down,
     Left,
-    Right
+    Right,
 }
 
 /// What direction the snake should turn.
@@ -75,14 +72,14 @@ enum Direction {
 pub enum Turn {
     Left,
     Right,
-    None
+    None,
 }
 
 /// The current status of the game.
 pub enum GameStatus {
     Won,
     Lost,
-    Ongoing
+    Ongoing,
 }
 
 /// The outcome of a single move/step.
@@ -94,7 +91,7 @@ enum StepOutcome {
     /// Snake has eaten some food
     Eat(Coords),
     /// Snake has moved (and nothing else has happened)
-    Move(Coords)
+    Move(Coords),
 }
 
 struct Snake {
@@ -106,7 +103,7 @@ struct Snake {
     /// checking).
     coord_set: FnvIndexSet<Coords, 32>,
     /// The direction the snake is currently moving in.
-    direction: Direction
+    direction: Direction,
 }
 
 impl Snake {
@@ -145,7 +142,7 @@ impl Snake {
             Direction::Up => Direction::Right,
             Direction::Down => Direction::Left,
             Direction::Left => Direction::Up,
-            Direction::Right => Direction::Down
+            Direction::Right => Direction::Down,
         }
     }
 
@@ -154,7 +151,7 @@ impl Snake {
             Direction::Up => Direction::Left,
             Direction::Down => Direction::Right,
             Direction::Left => Direction::Down,
-            Direction::Right => Direction::Up
+            Direction::Right => Direction::Up,
         }
     }
 
@@ -162,7 +159,7 @@ impl Snake {
         match direction {
             Turn::Left => self.turn_left(),
             Turn::Right => self.turn_right(),
-            Turn::None => ()
+            Turn::None => (),
         }
     }
 }
@@ -174,11 +171,10 @@ pub(crate) struct Game {
     food_coords: Coords,
     speed: u8,
     pub(crate) status: GameStatus,
-    score: u8
+    score: u8,
 }
 
 impl Game {
-
     pub(crate) fn new(rng_seed: u32) -> Self {
         let mut rng = Prng::new(rng_seed);
         let mut tail: FnvIndexSet<Coords, 32> = FnvIndexSet::new();
@@ -191,7 +187,7 @@ impl Game {
             food_coords,
             speed: 1,
             status: GameStatus::Ongoing,
-            score: 0
+            score: 0,
         }
     }
 
@@ -230,10 +226,22 @@ impl Game {
     fn get_next_move(&self) -> Coords {
         let head = &self.snake.head;
         let next_move = match self.snake.direction {
-            Direction::Up => Coords { row: head.row - 1, col: head.col },
-            Direction::Down => Coords { row: head.row + 1, col: head.col },
-            Direction::Left => Coords { row: head.row, col: head.col - 1 },
-            Direction::Right => Coords { row: head.row, col: head.col + 1 },
+            Direction::Up => Coords {
+                row: head.row - 1,
+                col: head.col,
+            },
+            Direction::Down => Coords {
+                row: head.row + 1,
+                col: head.col,
+            },
+            Direction::Left => Coords {
+                row: head.row,
+                col: head.col - 1,
+            },
+            Direction::Right => Coords {
+                row: head.row,
+                col: head.col + 1,
+            },
         };
         if next_move.is_out_of_bounds() {
             self.wraparound(next_move)
@@ -278,7 +286,7 @@ impl Game {
                     self.speed += 1
                 }
                 GameStatus::Ongoing
-            },
+            }
             StepOutcome::Move(c) => {
                 self.snake.move_snake(c, false);
                 GameStatus::Ongoing
@@ -310,7 +318,7 @@ impl Game {
         &self,
         head_brightness: u8,
         tail_brightness: u8,
-        food_brightness: u8
+        food_brightness: u8,
     ) -> [[u8; 5]; 5] {
         let mut values = [[0u8; 5]; 5];
         values[self.snake.head.row as usize][self.snake.head.col as usize] = head_brightness;
