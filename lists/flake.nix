@@ -1,35 +1,32 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/b58df7fc9d5f02c269091f2b0b81a6e06fc859bb";
+
     rust-overlay.url = "github:oxalica/rust-overlay";
+    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { nixpkgs, flake-utils, rust-overlay, ... }:
-    flake-utils.lib.eachSystem [ "x86_64-linux" ] (
-      system:
-      let
+  outputs = {
+    nixpkgs,
+    rust-overlay,
+    flake-utils,
+    ...
+  }:
+    flake-utils.lib.eachDefaultSystem (
+      system: let
+        overlays = [(import rust-overlay)];
         pkgs = import nixpkgs {
-          inherit system;
-          overlays = [ rust-overlay.overlays.default ];
+          inherit system overlays;
         };
       in
-      {
-        devShell = pkgs.mkShell
-          {
-            nativeBuildInputs = with pkgs; [
-              (
-                rust-bin.stable.latest.default.override {
-                  targets = [
-                    "thumbv7em-none-eabihf"
-                  ];
-                }
-              )
-              gdb
-              cargo-binutils
-              probe-rs
-              minicom
+        with pkgs; {
+          devShells.default = mkShell {
+            buildInputs = [
+              rust-bin.stable.latest.default
+              cargo-watch
+              rust-analyzer
             ];
           };
-      }
+        }
     );
 }

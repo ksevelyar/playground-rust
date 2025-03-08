@@ -1,6 +1,4 @@
 {
-  description = "A devShell example";
-
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/b58df7fc9d5f02c269091f2b0b81a6e06fc859bb";
 
@@ -24,8 +22,6 @@
         with pkgs; {
           devShells.default = mkShell {
             buildInputs = [
-              # openssl
-              # pkg-config
               rust-bin.stable.latest.default
               cargo-watch
               rust-analyzer
