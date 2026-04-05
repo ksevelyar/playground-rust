@@ -1,5 +1,5 @@
 [package]
-name = "nixie-clock"
+name = "oled-clock"
 version = "0.3.0"
 authors = ["Sergey Zubkov <ksevelyar@protonmail.com>"]
 edition = "2024"
@@ -7,7 +7,7 @@ resolver = "2"
 rust-version = "1.96"
 
 [[bin]]
-name = "nixie-clock"
+name = "oled-clock"
 harness = false # do not use the built in cargo test harness -> resolve rust-analyzer errors
 
 [profile.release]
@@ -22,6 +22,9 @@ log = "0.4"
 esp-idf-svc = { version = "0.52.1", features = ["critical-section", "embassy-time-driver", "embassy-sync"] }
 embassy-time = { version = "0.5", features = ["generic-queue-8"] }
 anyhow = "1.0"
+embedded-graphics = "0.8"
+ssd1306 = { version = "0.8", features = ["graphics"] }
+profont = "0.7.0"
 
 [build-dependencies]
 embuild = "0.33.1"

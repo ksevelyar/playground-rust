@@ -1,18 +1,22 @@
+use embedded_graphics::{
+    mono_font::MonoTextStyle, pixelcolor::BinaryColor, prelude::*, text::Text,
+};
+use profont::PROFONT_24_POINT;
 use esp_idf_svc::eventloop::EspSystemEventLoop;
-use esp_idf_svc::hal::delay::{Ets, FreeRtos};
-use esp_idf_svc::hal::gpio::{Level, Output, PinDriver};
+use esp_idf_svc::hal::delay::FreeRtos;
+use esp_idf_svc::hal::i2c::{I2cConfig, I2cDriver};
 use esp_idf_svc::hal::peripherals::Peripherals;
-use esp_idf_svc::nvs::*;
+use esp_idf_svc::hal::units::FromValueType;
+use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::sntp;
 use esp_idf_svc::sys::EspError;
 use esp_idf_svc::wifi::{BlockingWifi, ClientConfiguration, Configuration, EspWifi};
 use log::info;
+use ssd1306::{I2CDisplayInterface, Ssd1306, prelude::*};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 const SSID: &str = env!("SSID");
 const PASSWORD: &str = env!("PASS");
-const BLANK_DURATION: u32 = 500;
-const DISPLAY_DURATION: u32 = 1500;
 
 fn main() -> Result<(), EspError> {
     let utc_offset: i32 = env!("UTC_OFFSET").parse().unwrap_or(180);
@@ -25,81 +29,50 @@ fn main() -> Result<(), EspError> {
     let _nvs = EspDefaultNvsPartition::take()?;
 
     let _wifi = wifi_create(SSID, PASSWORD, peripherals.modem, sysloop)?;
-
     let _sntp = sntp::EspSntp::new_default()?;
     info!("SNTP initialized");
 
-    let mut tube_value = [
-        PinDriver::output(peripherals.pins.gpio0.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio1.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio2.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio3.degrade_output())?,
-    ];
+    let sda = peripherals.pins.gpio3;
+    let scl = peripherals.pins.gpio4;
+    let i2c = I2cDriver::new(
+        peripherals.i2c0,
+        sda,
+        scl,
+        &I2cConfig::new().baudrate(400u32.kHz().into()),
+    )?;
 
-    let mut tubes = [
-        PinDriver::output(peripherals.pins.gpio7.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio6.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio5.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio4.degrade_output())?,
-    ];
+    let interface = I2CDisplayInterface::new(i2c);
+    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate0)
+        .into_buffered_graphics_mode();
 
-    let mut digits = [0u8; 4];
-    let mut last_update = 0u64;
+    display.init().expect("OLED init failed");
+
+    let text_style = MonoTextStyle::new(&PROFONT_24_POINT, BinaryColor::On);
+
+    let mut last_second = 0u64;
 
     loop {
-        maybe_update_state(utc_offset, &mut last_update, &mut digits);
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        let second = now.as_secs();
 
-        for (i, &digit) in digits.iter().enumerate() {
-            set_all_tubes_low(&mut tubes)?;
-            Ets::delay_us(BLANK_DURATION);
+        if second != last_second {
+            let total_minutes = (second as i32 / 60) + utc_offset;
+            let hours = ((total_minutes / 60) % 24) as u32;
+            let minutes = (total_minutes % 60) as u32;
 
-            set_tube_value(&mut tube_value, digit)?;
-            select_tube(i, &mut tubes)?;
-            Ets::delay_us(DISPLAY_DURATION);
+            let time_str = format!("{:02}:{:02}", hours, minutes);
+
+            display.clear(BinaryColor::Off).unwrap();
+            Text::new(&time_str, Point::new(24, 27), text_style)
+                .draw(&mut display)
+                .unwrap();
+            display.flush().unwrap();
+
+            last_second = second;
         }
-        FreeRtos::delay_ms(1);
-    }
-}
 
-fn maybe_update_state(utc_offset: i32, last_update: &mut u64, digits: &mut [u8; 4]) {
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-    let seconds = now.as_secs();
-    if seconds == *last_update {
-        return;
+        FreeRtos::delay_ms(100);
     }
-
-    let total_minutes = seconds as i32 / 60 + utc_offset;
-    let hours = ((total_minutes / 60) % 24) as u32;
-    let minutes = (total_minutes % 60) as u32;
-    *digits = [
-        (hours / 10) as u8,
-        (hours % 10) as u8,
-        (minutes / 10) as u8,
-        (minutes % 10) as u8,
-    ];
-    *last_update = seconds;
-}
-
-fn set_all_tubes_low(pins: &mut [PinDriver<'_, Output>]) -> Result<(), EspError> {
-    for pin in pins.iter_mut() {
-        pin.set_level(Level::Low)?;
-    }
-    Ok(())
-}
-
-fn select_tube(idx: usize, pins: &mut [PinDriver<'_, Output>]) -> Result<(), EspError> {
-    for (i, pin) in pins.iter_mut().enumerate() {
-        pin.set_level(if i == idx { Level::High } else { Level::Low })?;
-    }
-    Ok(())
-}
-
-fn set_tube_value(tube_value: &mut [PinDriver<'_, Output>], digit: u8) -> Result<(), EspError> {
-    for (i, pin) in tube_value.iter_mut().enumerate() {
-        let bit_set = (digit >> i) & 1 != 0;
-        pin.set_level(if bit_set { Level::High } else { Level::Low })?;
-    }
-    Ok(())
 }
 
 fn wifi_create(
