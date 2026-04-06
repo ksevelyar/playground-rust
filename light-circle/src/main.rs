@@ -1,105 +1,95 @@
 use esp_idf_svc::eventloop::EspSystemEventLoop;
-use esp_idf_svc::hal::delay::{Ets, FreeRtos};
-use esp_idf_svc::hal::gpio::{Level, Output, PinDriver};
+use esp_idf_svc::hal::delay::FreeRtos;
 use esp_idf_svc::hal::peripherals::Peripherals;
-use esp_idf_svc::nvs::*;
+use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::sntp;
 use esp_idf_svc::sys::EspError;
 use esp_idf_svc::wifi::{BlockingWifi, ClientConfiguration, Configuration, EspWifi};
 use log::info;
-use std::time::{SystemTime, UNIX_EPOCH};
+use smart_leds::hsv::{hsv2rgb, Hsv};
+use smart_leds::SmartLedsWrite;
+use ws2812_esp32_rmt_driver::Ws2812Esp32Rmt;
 
 const SSID: &str = env!("SSID");
 const PASSWORD: &str = env!("PASS");
-const BLANK_DURATION: u32 = 500;
-const DISPLAY_DURATION: u32 = 1500;
 
+const NUM_LEDS: usize = 24;
+const BRIGHTNESS: u8 = 8;
+const SATURATION: u8 = 200;
+
+const PALETTES: &[(u8, u8)] = &[
+    (160, 220), // cyan → blue
+    (220, 255), // magenta → cyan
+    (0,   40),  // red → orange
+    (40,  80),  // orange → yellow
+    (80, 160),  // green → cyan
+];
+
+const TRANSITION_DURATION_MS: u32 = 5000;
+const FRAME_MS: u32 = 50;
+
+fn lerp_hue(a: u8, b: u8, t: f32) -> u8 {
+    let diff = ((b as i16 - a as i16 + 256) % 256) as f32;
+    let hue = (a as f32 + diff * t) % 256.0;
+    hue as u8
+}
+
+fn palette_hue(palette: &(u8, u8), position: f32) -> u8 {
+    let (start, end) = *palette;
+    lerp_hue(start, end, position)
+}
+
+#[allow(deprecated)]
 fn main() -> Result<(), EspError> {
-    let utc_offset: i32 = env!("UTC_OFFSET").parse().unwrap_or(180);
-
     esp_idf_svc::sys::link_patches();
     esp_idf_svc::log::EspLogger::initialize_default();
 
     let peripherals = Peripherals::take()?;
+
+    let rmt_channel = peripherals.rmt.channel0;
+    let led_pin = peripherals.pins.gpio5;
+    let mut leds = Ws2812Esp32Rmt::new(rmt_channel, led_pin)
+        .expect("Failed to initialize WS2812B LEDs");
+
     let sysloop = EspSystemEventLoop::take()?;
     let _nvs = EspDefaultNvsPartition::take()?;
-
     let _wifi = wifi_create(SSID, PASSWORD, peripherals.modem, sysloop)?;
-
     let _sntp = sntp::EspSntp::new_default()?;
     info!("SNTP initialized");
 
-    let mut tube_value = [
-        PinDriver::output(peripherals.pins.gpio0.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio1.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio2.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio3.degrade_output())?,
-    ];
-
-    let mut tubes = [
-        PinDriver::output(peripherals.pins.gpio7.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio6.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio5.degrade_output())?,
-        PinDriver::output(peripherals.pins.gpio4.degrade_output())?,
-    ];
-
-    let mut digits = [0u8; 4];
-    let mut last_update = 0u64;
+    let mut palette_idx = 0usize;
+    let mut transition = 0.0f32;
 
     loop {
-        maybe_update_state(utc_offset, &mut last_update, &mut digits);
+        let current = &PALETTES[palette_idx];
+        let next = &PALETTES[(palette_idx + 1) % PALETTES.len()];
 
-        for (i, &digit) in digits.iter().enumerate() {
-            set_all_tubes_low(&mut tubes)?;
-            Ets::delay_us(BLANK_DURATION);
+        let pixels = (0..NUM_LEDS).map(|i| {
+            let pos = i as f32 / NUM_LEDS as f32;
 
-            set_tube_value(&mut tube_value, digit)?;
-            select_tube(i, &mut tubes)?;
-            Ets::delay_us(DISPLAY_DURATION);
+            let hue_now = palette_hue(current, pos);
+            let hue_tgt = palette_hue(next, pos);
+
+            let hue = lerp_hue(hue_now, hue_tgt, transition);
+
+            hsv2rgb(Hsv {
+                hue,
+                sat: SATURATION,
+                val: BRIGHTNESS,
+            })
+        });
+
+        leds.write(pixels).unwrap();
+
+        transition += FRAME_MS as f32 / TRANSITION_DURATION_MS as f32;
+
+        if transition >= 1.0 {
+            transition = 0.0;
+            palette_idx = (palette_idx + 1) % PALETTES.len();
         }
-        FreeRtos::delay_ms(1);
-    }
-}
 
-fn maybe_update_state(utc_offset: i32, last_update: &mut u64, digits: &mut [u8; 4]) {
-    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-    let seconds = now.as_secs();
-    if seconds == *last_update {
-        return;
+        FreeRtos::delay_ms(FRAME_MS);
     }
-
-    let total_minutes = seconds as i32 / 60 + utc_offset;
-    let hours = ((total_minutes / 60) % 24) as u32;
-    let minutes = (total_minutes % 60) as u32;
-    *digits = [
-        (hours / 10) as u8,
-        (hours % 10) as u8,
-        (minutes / 10) as u8,
-        (minutes % 10) as u8,
-    ];
-    *last_update = seconds;
-}
-
-fn set_all_tubes_low(pins: &mut [PinDriver<'_, Output>]) -> Result<(), EspError> {
-    for pin in pins.iter_mut() {
-        pin.set_level(Level::Low)?;
-    }
-    Ok(())
-}
-
-fn select_tube(idx: usize, pins: &mut [PinDriver<'_, Output>]) -> Result<(), EspError> {
-    for (i, pin) in pins.iter_mut().enumerate() {
-        pin.set_level(if i == idx { Level::High } else { Level::Low })?;
-    }
-    Ok(())
-}
-
-fn set_tube_value(tube_value: &mut [PinDriver<'_, Output>], digit: u8) -> Result<(), EspError> {
-    for (i, pin) in tube_value.iter_mut().enumerate() {
-        let bit_set = (digit >> i) & 1 != 0;
-        pin.set_level(if bit_set { Level::High } else { Level::Low })?;
-    }
-    Ok(())
 }
 
 fn wifi_create(
