@@ -6,8 +6,8 @@ use esp_idf_svc::sntp;
 use esp_idf_svc::sys::EspError;
 use esp_idf_svc::wifi::{BlockingWifi, ClientConfiguration, Configuration, EspWifi};
 use log::info;
-use smart_leds::hsv::{hsv2rgb, Hsv};
 use smart_leds::SmartLedsWrite;
+use smart_leds::hsv::{Hsv, hsv2rgb};
 use ws2812_esp32_rmt_driver::Ws2812Esp32Rmt;
 
 const SSID: &str = env!("SSID");
@@ -20,8 +20,8 @@ const SATURATION: u8 = 200;
 const PALETTES: &[(u8, u8)] = &[
     (160, 220), // cyan → blue
     (220, 255), // magenta → cyan
-    (0,   40),  // red → orange
-    (40,  80),  // orange → yellow
+    (0, 40),    // red → orange
+    (40, 80),   // orange → yellow
     (80, 160),  // green → cyan
 ];
 
@@ -48,8 +48,8 @@ fn main() -> Result<(), EspError> {
 
     let rmt_channel = peripherals.rmt.channel0;
     let led_pin = peripherals.pins.gpio5;
-    let mut leds = Ws2812Esp32Rmt::new(rmt_channel, led_pin)
-        .expect("Failed to initialize WS2812B LEDs");
+    let mut leds =
+        Ws2812Esp32Rmt::new(rmt_channel, led_pin).expect("Failed to initialize WS2812B LEDs");
 
     let sysloop = EspSystemEventLoop::take()?;
     let _nvs = EspDefaultNvsPartition::take()?;

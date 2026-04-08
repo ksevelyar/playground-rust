@@ -26,10 +26,10 @@ embedded-graphics = "0.8"
 ssd1306 = { version = "0.8", features = ["graphics"] }
 profont = "0.7.0"
 smart-leds = "0.4"
-ws2812-esp32-rmt-driver = { 
-    git = "https://github.com/cat-in-136/ws2812-esp32-rmt-driver", 
-    tag = "v0.14.0", 
-    features = ["smart-leds-trait"] 
+ws2812-esp32-rmt-driver = {
+    git = "https://github.com/cat-in-136/ws2812-esp32-rmt-driver",
+    tag = "v0.14.0",
+    features = ["smart-leds-trait"]
 }
 
 [build-dependencies]
