@@ -1,4 +1,4 @@
-# Oled Clock
+# Stepper
 
 ## Build & Flash
 

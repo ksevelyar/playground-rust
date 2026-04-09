@@ -45,7 +45,7 @@ fn main() -> Result<(), EspError> {
 
     let interface = I2CDisplayInterface::new(i2c);
 
-    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate90)
+    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate90)
         .into_buffered_graphics_mode();
 
     display.init().expect("OLED init failed");
