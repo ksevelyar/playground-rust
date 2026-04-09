@@ -2,6 +2,7 @@ use esp_idf_svc::eventloop::EspSystemEventLoop;
 use esp_idf_svc::hal::delay::FreeRtos;
 use esp_idf_svc::hal::i2c::{I2cConfig, I2cDriver};
 use esp_idf_svc::hal::peripherals::Peripherals;
+use esp_idf_svc::hal::sys::esp_wifi_set_max_tx_power;
 use esp_idf_svc::hal::units::FromValueType;
 use esp_idf_svc::nvs::EspDefaultNvsPartition;
 use esp_idf_svc::sntp;
@@ -44,7 +45,7 @@ fn main() -> Result<(), EspError> {
 
     let interface = I2CDisplayInterface::new(i2c);
 
-    let mut display = Ssd1306::new(interface, DisplaySize128x32, DisplayRotation::Rotate90)
+    let mut display = Ssd1306::new(interface, DisplaySize128x64, DisplayRotation::Rotate90)
         .into_buffered_graphics_mode();
 
     display.init().expect("OLED init failed");
@@ -138,6 +139,14 @@ where
     Ok(())
 }
 
+// NOTE: reddit.com/r/arduino/comments/1dl6atc/esp32c3_boards_cant_connect_to_wifi_when_plugged
+fn fix_breadboard_wifi() {
+    unsafe {
+        esp_wifi_set_max_tx_power(34);
+        esp_idf_svc::hal::sys::esp_wifi_set_ps(esp_idf_svc::hal::sys::wifi_ps_type_t_WIFI_PS_NONE);
+    }
+}
+
 fn wifi_create(
     ssid: &str,
     pass: &str,
@@ -154,6 +163,8 @@ fn wifi_create(
     }))?;
 
     wifi.start()?;
+    fix_breadboard_wifi();
+
     wifi.connect()?;
     wifi.wait_netif_up()?;
 
