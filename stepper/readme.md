@@ -1,5 +1,20 @@
 # Stepper
 
+## Overview
+* detect steps via magnet trigger
+* manages workout sessions (start on first trigger, stops after 2 minutes from last trigger)
+* tracks and displays total training time (today + current week).
+* sends single session record to backend on session end via json POST
+
+## JSON payload
+```json
+{
+  "steps": u32,
+  "started_at": i64,
+  "ended_at": i64
+}
+```
+
 ## Build & Flash
 
 ```fish
