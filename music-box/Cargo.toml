@@ -1,0 +1,56 @@
+[package]
+edition      = "2024"
+name         = "music-box"
+rust-version = "1.96"
+version      = "0.4.0"
+
+[[bin]]
+name = "music-box"
+path = "./src/bin/main.rs"
+test = false
+
+[lib]
+test = false
+
+[dependencies]
+esp-hal = { version = "~1.1.0", features = ["defmt", "esp32c3", "unstable"] }
+
+esp-rtos = { version = "0.3.0", features = [
+  "defmt",
+  "embassy",
+  "esp-alloc",
+  "esp32c3",
+] }
+
+defmt                  = "1.0.1"
+esp-bootloader-esp-idf = { version = "0.5.0", features = ["defmt", "esp32c3"] }
+esp-alloc = { version = "0.10.0", features = ["defmt"] }
+panic-rtt-target = { version = "0.2.0", features = ["defmt"] }
+rtt-target = { version = "0.6.2", features = ["defmt"] }
+embassy-executor = { version = "0.10.0", features = ["defmt"] }
+embassy-time = { version = "0.5.0", features = ["defmt"] }
+
+embassy-sync = { version = "0.8.0", features = ["defmt"] }
+
+[patch.crates-io]
+# NOTE: https://github.com/GnomedDev/proc-macro-error-2/pull/14
+proc-macro-error2 = { git = "https://github.com/fgardt/proc-macro-error-2", branch = "fix/future-incompat" }
+
+[dev-dependencies]
+embedded-test = { version = "0.7.1", features = [
+  "defmt",
+  "embassy-010",
+  "external-executor",
+] }
+
+# For fine tuning these settings, please refer to https://doc.rust-lang.org/cargo/reference/profiles.html
+[profile.dev]
+# The default debug profile is too slow and too big for resource-constrained devices.
+# Always build with some optimizations enabled.
+opt-level = "s"
+
+[profile.release]
+codegen-units = 1     # LLVM can perform better optimizations using a single thread
+debug         = 2     # prefer slower builds but better debugging experience
+lto           = 'fat'
+opt-level     = 's'
