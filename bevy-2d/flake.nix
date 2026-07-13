@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
 
     rust-overlay.url = "github:oxalica/rust-overlay";
     rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
@@ -24,33 +24,34 @@
             buildInputs = [
               # openssl
               alsa-lib
-              # Cross Platform 3D Graphics API
               vulkan-loader
-              # For debugging around vulkan
               vulkan-tools
-              # Other dependencies
               libudev-zero
-              xorg.libX11
-              xorg.libXcursor
-              xorg.libXi
-              xorg.libXrandr
-              libxkbcommon
               wayland
+              libxkbcommon
 
               # wasm
-              wasm-bindgen-cli
-              wasm-pack
-              binaryen
+              # wasm-bindgen-cli
+              # wasm-pack
+              # binaryen
 
               pkg-config
               cargo-watch
               rust-analyzer
               (
-                rust-bin.stable.latest.default.override {
+                rust-bin.nightly.latest.default.override {
                   extensions = ["rust-src"];
                   targets = ["wasm32-unknown-unknown"];
                 }
               )
+            ];
+
+            LD_LIBRARY_PATH = lib.makeLibraryPath [
+              alsa-lib
+              vulkan-loader
+              libudev-zero
+              wayland
+              libxkbcommon
             ];
           };
         }
