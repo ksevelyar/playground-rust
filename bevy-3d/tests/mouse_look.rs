@@ -1,6 +1,6 @@
 use bevy::input::mouse::AccumulatedMouseMotion;
 use bevy::prelude::*;
-use bevy_3d::{mouse_look, move_player, setup, CameraState, GameState, Player};
+use bevy_3d::{mouse_look, move_player, setup_room, CameraState, GameState, Player};
 use std::time::Duration;
 
 fn create_test_app() -> App {
@@ -15,7 +15,7 @@ fn create_test_app() -> App {
     ));
     app.insert_resource(Assets::<Mesh>::default());
     app.insert_resource(Assets::<StandardMaterial>::default());
-    app.add_systems(Startup, setup);
+    app.add_systems(Startup, setup_room);
     app.add_systems(Update, (mouse_look, move_player).run_if(in_state(GameState::Playing)));
     app
 }
@@ -89,7 +89,6 @@ fn pitch_is_clamped() {
         .single(app.world())
         .unwrap();
 
-    // push pitch way up over several frames
     for _ in 0..100 {
         app.world_mut()
             .resource_mut::<AccumulatedMouseMotion>()

@@ -1,7 +1,7 @@
 use bevy::input::keyboard::{KeyboardInput, Key, NativeKey};
 use bevy::input::ButtonState;
 use bevy::prelude::*;
-use bevy_3d::{setup, setup_pause_menu, toggle_pause, GameState};
+use bevy_3d::{setup_room, setup_pause_menu, toggle_pause, GameState};
 use std::time::Duration;
 
 fn create_test_app() -> App {
@@ -15,7 +15,7 @@ fn create_test_app() -> App {
     ));
     app.insert_resource(Assets::<Mesh>::default());
     app.insert_resource(Assets::<StandardMaterial>::default());
-    app.add_systems(Startup, setup);
+    app.add_systems(Startup, setup_room);
     app.add_systems(Update, toggle_pause);
     app.add_systems(OnEnter(GameState::Paused), setup_pause_menu);
     app
